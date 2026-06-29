@@ -16,6 +16,8 @@ from .location_scorer import LocationScorer
 from .education_scorer import EducationScorer
 from .behavioral_scorer import BehavioralScorer
 from .honeypot_detector import HoneypotDetector
+from .semantic_scorer import SemanticScorer
+from .composite_scorer import CompositeScorer
 
 __all__ = [
     "DataLoader",
@@ -33,6 +35,8 @@ __all__ = [
     "LocationScorer",
     "EducationScorer",
     "BehavioralScorer",
-    "HoneypotDetector"
+    "HoneypotDetector",
+    "SemanticScorer",
+    "CompositeScorer"
 ]
 

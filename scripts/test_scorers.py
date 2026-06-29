@@ -12,6 +12,7 @@ from ranker.location_scorer import LocationScorer
 from ranker.education_scorer import EducationScorer
 from ranker.behavioral_scorer import BehavioralScorer
 from ranker.honeypot_detector import HoneypotDetector
+from ranker.composite_scorer import CompositeScorer
 
 def main():
     if len(sys.argv) < 2:
@@ -28,7 +29,7 @@ def main():
     candidates = loader.load_all(max_candidates=10)
     print(f"Loaded {len(candidates)} candidates for testing.\n")
 
-    # Instantiate scorers
+    # 1. Instantiate individual scorers for bound verification
     skills_scorer = SkillsScorer()
     career_scorer = CareerScorer()
     experience_scorer = ExperienceScorer()
@@ -92,10 +93,47 @@ def main():
 
     print("=" * 165)
     if errors > 0:
-        print(f"Verification FAILED with {errors} score out-of-bound/inconsistency errors.")
+        print(f"Individual Scorer Verification FAILED with {errors} errors.\n")
         sys.exit(1)
     else:
-        print("Verification PASSED! All standard scores are in [0.0, 1.0], behavioral scores in [0.3, 1.2], and honeypots are mapped correctly.")
+        print("Individual Scorer Verification PASSED! All bounds and flags are valid.\n")
+
+    # 2. Verify CompositeScorer and Pipeline
+    print("Initializing CompositeScorer...")
+    composite_scorer = CompositeScorer(use_semantic=True, semantic_top_n=5)
+    
+    # Run the ranking pipeline
+    ranked_candidates = composite_scorer.score_all(candidates)
+    
+    print("\n" + "=" * 165)
+    print("FINAL PIPELINE CANDIDATE RANKINGS (Normalized & Ranked)")
+    print("=" * 165)
+    print(f"{'Rank':<5} | {'ID':<15} | {'Composite Score':<18} | {'Raw Structural':<15} | {'TF-IDF':<10} | {'Semantic (Stage B)':<20} | {'Honeypot':<10}")
+    print("-" * 165)
+    
+    for rank, r in enumerate(ranked_candidates, 1):
+        cid = r["candidate_id"]
+        comp = r["composite_score"]
+        raw_struct = r["raw_structural"]
+        tf = r["tfidf_score"]
+        sem = r["semantic_score"]
+        is_hp = r["is_honeypot"]
+        
+        sem_str = f"{sem:.4f}" if sem is not None else "Skipped"
+        
+        print(f"{rank:<5} | {cid:<15} | {comp:<18.4f} | {raw_struct:<15.4f} | {tf:<10.4f} | {sem_str:<20} | {str(is_hp):<10}")
+        
+        # Verify normalization bounds
+        if not (0.0 <= comp <= 1.0):
+            print(f"ERROR: Normalized composite score {comp} for {cid} is out of bounds [0.0, 1.0]")
+            errors += 1
+            
+    print("=" * 165)
+    if errors > 0:
+        print("Composite Scorer Pipeline Verification FAILED.")
+        sys.exit(1)
+    else:
+        print("Composite Scorer Pipeline Verification PASSED! Full system functions correctly.")
 
 if __name__ == "__main__":
     main()
