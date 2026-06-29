@@ -49,14 +49,14 @@ if "reasonings" not in st.session_state:
 st.sidebar.title("⚙️ Configuration")
 enable_semantic = st.sidebar.toggle(
     "Enable Semantic Re-ranking (Stage B)",
-    value=False,
+    value=True,
     help="Runs sentence-transformer (all-MiniLM-L6-v2) on the top candidates. Takes ~15s to run on CPU."
 )
 max_candidates = st.sidebar.slider(
     "Max candidates to rank",
     min_value=10,
     max_value=100,
-    value=50,
+    value=100,
     help="Limits the number of candidate files processed for the sandbox run."
 )
 
@@ -154,8 +154,6 @@ with tab1:
     # Pipeline Run trigger
     run_disabled = (st.session_state.uploaded_candidates is None)
     if st.button("Run Ranker 🚀", disabled=run_disabled, type="primary"):
-        candidates_to_process = st.session_state.uploaded_candidates[:max_candidates]
-        
         # Streamlit status indicator
         with st.status("Initializing scoring pipeline...", expanded=True) as status:
             status.update(label="Extracting candidate features...")
@@ -174,10 +172,14 @@ with tab1:
                     [scorer.semantic.jd_text], convert_to_numpy=True, show_progress_bar=False
                 )
             
-            ranked_results = scorer.score_all(candidates_to_process)
+            # Score ALL candidates to ensure TF-IDF and Normalization bounds are computed over the full pool
+            all_ranked_results = scorer.score_all(st.session_state.uploaded_candidates)
+            
+            # Slice results to top max_candidates for UI display and details
+            ranked_results = all_ranked_results[:max_candidates]
             
             status.update(label="Compiling natural-language justifications...")
-            candidates_by_id = {c["candidate_id"]: c for c in candidates_to_process}
+            candidates_by_id = {c["candidate_id"]: c for c in st.session_state.uploaded_candidates}
             reasoning_gen = ReasoningGenerator()
             reasonings = {}
             for rank_idx, r in enumerate(ranked_results, start=1):
@@ -193,7 +195,7 @@ with tab1:
             elapsed = time.time() - t0
             status.update(label="Processing and ranking finished!", state="complete")
             
-        st.success(f"✅ Ranked {len(ranked_results)} candidates in {elapsed:.1f} seconds.")
+        st.success(f"✅ Scored {len(st.session_state.uploaded_candidates)} candidates and loaded top {len(ranked_results)} in {elapsed:.1f} seconds.")
 
 # ----------------------------------------------------
 # Tab 2: Results
