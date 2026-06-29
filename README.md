@@ -2,7 +2,7 @@
 
 Redrob Ranker is a high-performance, modular candidate ranking system built for the Redrob Hackathon. It is designed to parse, score, and rank large candidate pools (up to 100,000+ candidates) in under 5 minutes on standard CPU-only hardware, without requiring network access.
 
-The system evaluates candidates against the job description: **Senior AI Engineer — Founding Team at Redrob AI**.
+The system evaluates candidates against the job description: **Senior AI Engineer - Founding Team at Redrob AI**.
 
 ---
 

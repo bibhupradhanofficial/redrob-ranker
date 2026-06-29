@@ -16,7 +16,7 @@ from ranker.reasoning_generator import ReasoningGenerator
 
 # Set Streamlit Page Configuration
 st.set_page_config(
-    page_title="Redrob AI Candidate Ranker — Hackathon Sandbox",
+    page_title="Redrob AI Candidate Ranker - Hackathon Sandbox",
     page_icon="🚀",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -83,7 +83,7 @@ if os.path.exists(sample_path):
 # ----------------------------------------------------
 # 📄 Main Page Headers
 # ----------------------------------------------------
-st.title("Redrob AI Candidate Ranker — Hackathon Sandbox")
+st.title("Redrob AI Candidate Ranker - Hackathon Sandbox")
 st.subheader("Position: Senior AI Engineer · Founding Team @ Redrob AI")
 
 # Create main area tabs
