@@ -9,13 +9,15 @@ The system evaluates candidates against the job description: **Senior AI Enginee
 ## 🚀 Key Features
 
 - **High-Performance Parsing**: Streams candidate profiles from raw `.jsonl` or `.jsonl.gz` files, handling malformed lines gracefully and efficiently.
-- **Multidimensional Scoring Framework**: Evaluates candidates across five critical domains:
+- **Multidimensional Scoring Framework**: Evaluates candidates across five critical structural domains plus behavioral and semantic layers:
   1. **Skills Fit** (Weighted match, proficiency, endorsements, and assessments).
   2. **Career Trajectory** (Seniority, consulting company penalties, product company bonuses, and open-source contributions).
   3. **Experience Relevance** (Ideal vs. soft experience ranges, over-experience controls).
   4. **Location Fit** (Tier-based geographical scoring and relocation adjustments).
   5. **Education Quality** (Degree type, field of study alignment, and institution tiering).
-- **Keyword-Stuffer Trap**: Actively penalizes candidates who list an excessive number of skills (>25) to prevent gaming the ranker.
+- **Behavioral Multiplier**: Factoring in candidate availability, platform activity recency, responsiveness rates, and profile completeness.
+- **Honeypot Detection Anomaly Filter**: Automatically flags profile timeline inconsistencies, impossible job durations, expert skill inflation, and impossible response rates, downweighting suspected fake candidates.
+- **Two-Stage Semantic Matcher**: Integrates fast TF-IDF matching across the full pool followed by lazy-loaded `SentenceTransformer` CPU-based re-ranking on the top candidates.
 - **Zero-GPU / Offline Execution**: Runs entirely on CPU with a memory footprint of $\le$ 16 GB RAM and no external API dependencies.
 
 ---
@@ -24,24 +26,34 @@ The system evaluates candidates against the job description: **Senior AI Enginee
 
 ```text
 redrob-ranker/
-├── .gitignore               # Excludes python virtualenv, IDE configs, system logs, etc.
-├── README.md                # Comprehensive documentation (this file)
-├── requirements.txt         # Project dependencies (torch CPU-only, pandas, scikit-learn, etc.)
-├── submission_metadata.yaml # Submission metadata for the hackathon
+├── .gitignore                 # Excludes python virtualenv, IDE configs, system logs, etc.
+├── README.md                  # Comprehensive documentation (this file)
+├── requirements.txt           # Project dependencies (torch CPU-only, pandas, scikit-learn, etc.)
+├── submission_metadata.yaml   # Submission metadata for the hackathon
+├── rank.py                    # Main CLI entry point for the submission pipeline
+├── validate_submission.py     # Checks CSV compliance against hackathon guidelines
 ├── data/
 │   └── sample_candidates.json # Sample candidate dataset for testing
+├── sandbox/
+│   └── app.py                 # Streamlit web dashboard for visual sandbox testing
 ├── ranker/
-│   ├── __init__.py          # Exposes scorers and configurations
-│   ├── data_loader.py       # JSONL stream loader and batching module
-│   ├── jd_config.py         # Job description text and criteria configurations
-│   ├── skills_scorer.py     # Matches skill requirements, proficiency, and assessments
-│   ├── career_scorer.py     # Scores job titles, career progression, and company pedigree
-│   ├── experience_scorer.py # Scores years of experience against target ranges
-│   ├── location_scorer.py   # Scores Tier 1 / Tier 2 city proximity and relocation
-│   └── education_scorer.py  # Evaluates degree levels, STEM fields, and school tiering
+│   ├── __init__.py            # Exposes scorers, detectors, and configurations
+│   ├── data_loader.py         # JSONL stream loader and batching module
+│   ├── jd_config.py           # Job description text and criteria configurations
+│   ├── skills_scorer.py       # Matches skill requirements, proficiency, and assessments
+│   ├── career_scorer.py       # Scores job titles, career progression, and company pedigree
+│   ├── experience_scorer.py   # Scores years of experience against target ranges
+│   ├── location_scorer.py     # Scores Tier 1 / Tier 2 city proximity and relocation
+│   ├── education_scorer.py    # Evaluates degree levels, STEM fields, and school tiering
+│   ├── behavioral_scorer.py   # Computes availability and responsiveness multipliers
+│   ├── honeypot_detector.py   # Detects profile inconsistencies and data corruption
+│   ├── semantic_scorer.py     # Computes TF-IDF similarity and SentenceTransformer re-rankings
+│   ├── composite_scorer.py    # Blends all sub-scores, applies multipliers, and normalizes
+│   ├── reasoning_generator.py # Compiles grounded, natural language ranked reasonings
+│   └── output_writer.py       # Exports top 100 candidates to structured CSV files
 └── scripts/
-    ├── explore.py           # Exploratory script showing candidate profile distributions
-    └── test_scorers.py      # Verification script to test all modular scorers
+    ├── explore.py             # Exploratory script showing candidate profile distributions
+    └── test_scorers.py        # Verification script to test all modular scorers
 ```
 
 ---
@@ -49,91 +61,128 @@ redrob-ranker/
 ## ⚙️ Setup and Installation
 
 1. **Create and Activate a Virtual Environment**:
+
    ```bash
    # Create a virtual environment
    python -m venv .venv
-   
+
    # Activate on Windows (PowerShell)
    .\.venv\Scripts\Activate.ps1
-   
+
    # Activate on Windows (CMD)
    .\.venv\Scripts\activate.bat
-   
+
    # Activate on Unix/macOS
    source .venv/bin/activate
    ```
-
 2. **Install Dependencies**:
+
    ```bash
    pip install -r requirements.txt
    ```
 
 ---
 
-## 🏃 Running the Scripts
+## 🏃 Running the Project
 
-The system includes two pre-built scripts for verification and exploration:
+The system contains command-line interfaces and an interactive dashboard for evaluation:
 
-### 1. Run Verification & Test Scorers
-Verify that all scorers yield outputs within bounds (`[0.0, 1.0]`):
+### 1. Running the Main Ranking CLI (`rank.py`)
+
+This is the primary script that executes the ranking pipeline and writes output CSV files.
+
+* **Run on sample candidate array (JSON)** (includes auto-validation):
+  ```bash
+  python rank.py --candidates data/sample_candidates.json --out submission.csv --sample --validate
+  ```
+* **Run on full candidate database (JSONL)**:
+  ```bash
+  python rank.py --candidates data/candidates.jsonl --out submission.csv --validate
+  ```
+
+### 2. Running the Streamlit Sandbox Dashboard (`sandbox/app.py`)
+
+To launch the interactive visual evaluation board:
+
 ```bash
-python scripts/test_scorers.py data/sample_candidates.json
+streamlit run sandbox/app.py
 ```
-*(Alternatively, use `.\.venv\Scripts\python.exe scripts/test_scorers.py data/sample_candidates.json` if running directly).*
 
-### 2. Candidate Data Exploration
-Explore candidate distributions (countries, job titles, and experience metrics) in the sample dataset:
-```bash
-python scripts/explore.py data/sample_candidates.json
-```
+This opens the dashboard at **`http://localhost:8501`**, where you can upload `.json` or `.jsonl` pools, tweak limits, toggle Stage B transformers, inspect individual candidate score layers via Plotly charts, and download the ranked CSV.
+
+### 3. Running Verification and Exploration Scripts
+
+* **Verification script** (Tests individual module bounds):
+  ```bash
+  python scripts/test_scorers.py data/sample_candidates.json
+  ```
+* **Candidate distribution explorer**:
+  ```bash
+  python scripts/explore.py data/sample_candidates.json
+  ```
 
 ---
 
 ## 🧠 Scoring System Details
 
-### 1. Skills Scorer (`SkillsScorer`)
-Matches skills listed in candidate profiles against required and nice-to-have skills.
-- **Required Skill Match**: Base score $1.0$ per match.
-- **Nice-To-Have Skill Match**: Base score $0.5$ per match.
-- **Proficiency Multiplier**:
-  - `expert`: $1.0$ | `advanced`: $0.9$ | `intermediate`: $0.75$ | `beginner`: $0.5$
-- **Trust Multiplier**: Scaled by endorsements up to 100: $\text{mult} = \min(1.0, 0.7 + \frac{\text{endorsements}}{100})$.
-- **Duration Multiplier**: Normalized based on duration in months: $\min(1.0, \frac{\text{months}}{24})$.
-- **Assessment Bonus**: Up to $+0.2$ bonus for verified skills assessments.
-- **Keyword Stuffing Trap**: If the profile lists $>25$ skills, a penalty is applied: $\text{score} = \text{score} \times \max(0.7, 1.0 - (\text{skills\_count} - 25) \times 0.01)$.
+### 1. Structural Scorers (Weight: 100% of Structural Score)
 
-### 2. Career Scorer (`CareerScorer`)
-Evaluates the candidate's career trajectory. The final score is a weighted combination of:
-- **Title Score (45%)**: Matching target titles ("AI Engineer", "ML Engineer", "Data Scientist", etc.). Non-AI titles (like "HR Manager", "Operations Manager") receive a sharp penalty.
-- **Company Pedigree (30%)**: Consulting-fraction penalty. Candidates coming from large Indian consulting firms (TCS, Wipro, Infosys, etc.) are penalized proportionally to the duration spent there.
-- **Career Progression (15%)**: Evaluates promotion trajectories (climbing seniority levels) and flags career stagnation (staying at one company for $\ge 10$ years without title progression).
-- **Product Company Bonus (Up to +0.30)**: Bonus score for SaaS, E-commerce, AI/ML, and tech startup backgrounds.
-- **Open-source & LinkedIn Bonus (Up to +0.07)**: Bonus for Github activity score $>50$ and verified LinkedIn connections.
+* **Skills Scorer (`SkillsScorer`)** [Weight: 30%]:
+  - Required skills match $\rightarrow$ Base $1.0$; Nice-to-have match $\rightarrow$ Base $0.5$.
+  - Proficiency multipliers: `expert` ($1.0$), `advanced` ($0.9$), `intermediate` ($0.75$), `beginner` ($0.5$).
+  - Multiplier adjustments for endorsements ($\min(1.0, 0.7 + \frac{\text{ends}}{100})$) and duration ($\min(1.0, \frac{\text{months}}{24})$).
+  - Assessment score bonuses up to $+0.2$.
+  - Keyword stuffing penalty: listing $>25$ skills penalizes the score.
+* **Career Scorer (`CareerScorer`)** [Weight: 35%]:
+  - Title score: matching target engineering roles. Non-AI titles get penalized.
+  - Company pedigree: penalizes candidates coming from major IT consulting firms (TCS, Infosys, Wipro, etc.) based on duration fraction.
+  - Career progression: rewards promotions (seniority level increases) and flags career stagnation ($\ge 10$ years at one firm with no title changes).
+  - Product company bonuses up to $+0.30$.
+  - Open-source and LinkedIn bonuses up to $+0.07$.
+* **Experience Scorer (`ExperienceScorer`)** [Weight: 15%]:
+  - Ideal range (5–9 YOE) $\rightarrow$ Score $1.0$.
+  - Soft boundaries (4–10 YOE) $\rightarrow$ Linearly mapped between $0.75$ and $1.0$.
+  - Over-experience cap: candidates with $>15$ YOE are capped at $0.55$.
+* **Location Scorer (`LocationScorer`)** [Weight: 10%]:
+  - Tier 1 preferred cities (Pune/Noida/NCR/Delhi/Gurgaon) $\rightarrow$ Score $1.0$.
+  - Tier 2 cities (Hyderabad/Mumbai/Bangalore/Chennai) $\rightarrow$ Score $0.85$.
+  - Willingness to relocate adds a $+0.10$ bonus.
+* **Education Scorer (`EducationScorer`)** [Weight: 10%]:
+  - Degree tier: PhD ($1.0$) | Masters ($0.9$) | Bachelors ($0.75$).
+  - Field relevance: CS/AI ($1.0$) | Math/Physics ($0.85$) | non-STEM ($0.5$).
+  - Institution tier bonuses: Tier 1 (+0.15) | Tier 2 (+0.07).
 
-### 3. Experience Scorer (`ExperienceScorer`)
-Aligns years of experience (YOE) with the JD requirements:
-- **Ideal Range (5–9 years)**: Score $1.0$.
-- **Soft Boundaries (4–10 years)**: Linearly interpolated from $0.75$ to $1.0$ (e.g., 4 YOE = $0.75$, 10 YOE = $0.75$).
-- **Outside Bounds**: Decreases by $0.1$ per year away from the soft boundaries.
-- **Seniority Cap**: Candidates with $>15$ years of experience are capped at a maximum of $0.55$ to filter out over-qualified/expensive profiles.
+### 2. Behavioral Scorer (`BehavioralScorer`)
 
-### 4. Location Scorer (`LocationScorer`)
-Evaluates proximity to the hybrid office locations (Pune/Noida, India):
-- **Tier 1 Cities (India)**: Pune, Noida, Delhi, NCR, Gurugram, Gurgaon $\rightarrow$ Score $1.0$.
-- **Tier 2 Cities (India)**: Hyderabad, Mumbai, Bangalore, Chennai, etc. $\rightarrow$ Score $0.85$.
-- **Other Cities (India)**: Score $0.65$.
-- **Outside India**: Score $0.30$ ($0.40$ if willing to relocate).
-- **Relocation Adjustment**: Willingness to relocate adds a $+0.10$ bonus (capped at $1.0$).
+Acts as a multiplier in `[0.3, 1.2]` applied on top of blended scores.
 
-### 5. Education Scorer (`EducationScorer`)
-Scores the candidate's highest academic qualification:
-- **Degree Tier**: PhD ($1.0$) | Master's ($0.9$) | Bachelor's ($0.75$) | Diploma ($0.5$).
-- **Field of Study**: CS/AI/ECE ($1.0$) | Math/Stats/Physics ($0.85$) | Other STEM ($0.7$) | Non-STEM ($0.5$).
-- **University Tier**: Tier 1 schools (IITs, NITs, BITS, etc.) receive a $+0.15$ bonus; Tier 2 receives a $+0.07$ bonus.
+* **Availability (35%)**: Calculates `open_to_work_flag` (True: 1.0, False: 0.5), platform login recency (1.0 for $\le$14 days, down to 0.15 for 180+ days), and applications submitted.
+* **Responsiveness (30%)**: Compares `recruiter_response_rate` (0–1), `avg_response_time_hours` buckets (0–24h up to 336h+), and `interview_completion_rate` (0–1).
+* **Engagement (20%)**: Based on `profile_completeness_score`, verified email/phone, LinkedIn connectivity, and recruiter saves.
+* **Notice Period Penalty**: Multiplier penalty for notice days ($0$ days: 1.05 bonus, 1–30: 1.0, 90: 0.88, 120+: 0.70).
+* **Offer Acceptance Rate (15%)**: Maps candidate acceptance history, defaulting to neutral 0.7 if no history is present.
+
+### 3. Honeypot Detector (`HoneypotDetector`)
+
+Checks for impossible profile inconsistencies. Suspected candidates receive a multiplier of `0.01` (placing them at the bottom of rankings).
+
+* **Timeline Inconsistency**: Checks if career roles start before college graduation.
+* **Company Existence**: Checks if claimed duration at a role exceeds its calendar existence.
+* **Skill Expert Inflation**: Identifies candidates listing $\ge 5$ "expert" skills with $0$ endorsements and $0$ duration.
+* **Experience Overflow**: Checks if total career history duration exceeds claimed years of experience.
+* **Impossible Values**: Flags out-of-bounds rates (e.g. response rate $>1.0$ or acceptance rates outside `[-1, 1]`).
+* **Orphaned Assessments**: Checks if candidate completed $>8$ skill assessments for skills not listed on their profile.
+
+### 4. Semantic Scorer & Blending (`SemanticScorer` & `CompositeScorer`)
+
+* **TF-IDF Blending (Stage A)**: Matches full candidate text corpus against the job description text, blending it as: $\text{blend} = \text{structural} \times 0.75 + \text{tfidf} \times 0.25$.
+* **Transformer Re-ranking (Stage B)**: Re-ranks top-N candidates using the lightweight `all-MiniLM-L6-v2` transformer model on CPU, blending it as: $\text{blend} = \text{structural} \times 0.60 + \text{tfidf} \times 0.20 + \text{semantic} \times 0.20$.
 
 ---
 
 ## ⏱️ Technical Constraints
+
 - **Hardware**: CPU Only, $\le$ 16 GB RAM.
 - **Network**: Completely offline (no external HTTP calls allowed).
 - **Execution Time**: The ranker runs in $\le$ 5 minutes for a pool of 100k candidates.
+

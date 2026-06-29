@@ -99,24 +99,57 @@ with tab1:
         "The schema must match the standard Redrob Candidate format (containing `candidate_id`, `profile`, `skills`, `career_history`, and `redrob_signals`)."
     )
 
-    uploaded_file = st.file_uploader("Choose a candidate JSON file", type=["json"])
+    uploaded_file = st.file_uploader("Choose a candidate JSON or JSONL file", type=["json", "jsonl"])
 
     if uploaded_file is not None:
         try:
-            data = json.load(uploaded_file)
-            if not isinstance(data, list):
-                st.error("Invalid File Format: Uploaded JSON must be a list (array) of candidate objects.")
-                st.session_state.uploaded_candidates = None
+            file_contents = uploaded_file.getvalue().decode("utf-8")
+            
+            # Detect if it's a JSON array or JSON Lines
+            first_char = ""
+            for char in file_contents[:200]:
+                if char.strip():
+                    first_char = char
+                    break
+            
+            data = None
+            if first_char == '[':
+                # Standard JSON Array
+                parsed_val = json.loads(file_contents)
+                if isinstance(parsed_val, list):
+                    data = parsed_val
+                else:
+                    st.error("Invalid File Format: Uploaded JSON must be a list (array) of candidate objects.")
             else:
+                # JSON Lines format
+                data = []
+                for line_num, line in enumerate(file_contents.splitlines(), start=1):
+                    line_clean = line.strip()
+                    if not line_clean:
+                        continue
+                    try:
+                        data.append(json.loads(line_clean))
+                    except json.JSONDecodeError as je:
+                        st.error(f"JSON Decode Error on line {line_num}: {je}")
+                        data = None
+                        break
+            
+            if data is not None and len(data) > 0:
                 st.session_state.uploaded_candidates = data
                 st.success(f"Success! Loaded {len(data)} candidates from file.")
                 
                 # Show collapsed preview of the first candidate
                 with st.expander("Preview First Candidate Record schema"):
                     st.json(data[0])
+            elif data is not None and len(data) == 0:
+                st.warning("Uploaded file is empty (contains 0 candidates).")
+                st.session_state.uploaded_candidates = None
+            else:
+                st.session_state.uploaded_candidates = None
         except Exception as e:
-            st.error(f"Error parsing JSON: {e}")
+            st.error(f"Error parsing candidates file: {e}")
             st.session_state.uploaded_candidates = None
+
 
     # Pipeline Run trigger
     run_disabled = (st.session_state.uploaded_candidates is None)
