@@ -18,6 +18,8 @@ from .behavioral_scorer import BehavioralScorer
 from .honeypot_detector import HoneypotDetector
 from .semantic_scorer import SemanticScorer
 from .composite_scorer import CompositeScorer
+from .reasoning_generator import ReasoningGenerator
+from .output_writer import OutputWriter
 
 __all__ = [
     "DataLoader",
@@ -37,6 +39,8 @@ __all__ = [
     "BehavioralScorer",
     "HoneypotDetector",
     "SemanticScorer",
-    "CompositeScorer"
+    "CompositeScorer",
+    "ReasoningGenerator",
+    "OutputWriter"
 ]
 
