@@ -16,7 +16,7 @@ from ranker.reasoning_generator import ReasoningGenerator
 
 # Set Streamlit Page Configuration
 st.set_page_config(
-    page_title="Redrob AI Candidate Ranker - Hackathon Sandbox",
+    page_title="Redrob AI Candidate Ranker",
     page_icon="🚀",
     layout="wide",
     initial_sidebar_state="expanded"
