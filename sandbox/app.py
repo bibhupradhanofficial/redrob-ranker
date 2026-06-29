@@ -84,7 +84,7 @@ if os.path.exists(sample_path):
 # 📄 Main Page Headers
 # ----------------------------------------------------
 st.title("Redrob AI Candidate Ranker - Hackathon Sandbox")
-st.subheader("Position: Senior AI Engineer · Founding Team @ Redrob AI")
+st.subheader("Position: Senior AI Engineer - Founding Team @ Redrob AI")
 
 # Create main area tabs
 tab1, tab2, tab3 = st.tabs(["Upload & Rank", "Results", "Score Breakdown"])
