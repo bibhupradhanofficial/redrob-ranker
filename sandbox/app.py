@@ -66,7 +66,7 @@ st.sidebar.info("💻 CPU only | 🔒 Offline inference | ⏱️ Run limit <= 5 
 
 # Link to repository and author info
 st.sidebar.markdown("[GitHub Repository](https://github.com/bibhu-pradhan/redrob-ranker)")
-st.sidebar.caption("Hackathon Team: **Team Bibhu Pradhan**")
+st.sidebar.caption("Hackathon Team: **Bibhu Pradhan**")
 
 # Serve sample candidate file directly from local data folder
 sample_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'sample_candidates.json')
