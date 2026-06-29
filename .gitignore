@@ -35,7 +35,7 @@ ehthumbs.db
 *.log
 pip-log.txt
 pip-delete-this-directory.txt
-.streamlit/
+# .streamlit/
 .ipynb_checkpoints/
 .pytest_cache/
 .mypy_cache/
