@@ -1,5 +1,82 @@
-submission:
-  project_name: redrob-ranker
-  target_job: Senior AI Engineer - Founding Team at Redrob AI
-  author: Participant
-  date: 2026-06-29
+# Redrob Hackathon — Submission Metadata 
+
+# ============================================================================
+# Team identity
+# ============================================================================
+team_name: "Quantum Pulse"  # Used in leaderboard and announcements
+
+primary_contact:
+  name: "Bibhasindhu Pradhan"
+  email: "bibhasindhupradhan@gmail.com"   # Used for all organizer communication
+  phone: "+91-8260229788"        # Used for top-50 / top-10 outreach
+
+team_members:
+  - name: "Bibhasindhu Pradhan"
+    email: "bibhasindhupradhan@gmail.com"
+    role: "ML Developer"         # Optional, e.g. "Team Lead", "Backend", "Data"
+
+  # Add more members as needed; solo participants list just one member
+
+# ============================================================================
+# Code and reproducibility
+# ============================================================================
+github_repo: "https://github.com/bibhupradhanofficial/redrob-ranker"
+# Required. Must be reachable. Private repos OK if you can grant organizer
+# access at Stage 3 (the email to add will be communicated then).
+
+sandbox_link: "https://huggingface.co/spaces/YOUR_USERNAME/redrob-ranker"
+# Required. A working hosted environment where the ranker can be run on a small
+# candidate sample. See Section 10.5 of submission_spec.md for acceptable
+# platforms (HuggingFace Spaces, Streamlit Cloud, Replit, Colab, Docker, Binder).
+
+reproduce_command: "python rank.py --candidates ./candidates.jsonl --out ./submission.csv"
+# The single command that produces submission.csv from candidates.jsonl.
+# Should run end-to-end within 5 minutes on CPU with 16GB RAM and no network.
+
+# ============================================================================
+# Compute environment
+# ============================================================================
+compute:
+  platform: "Local Windows 11 Intel Core i3-1115G4"                    # Or: "AWS EC2 c5.4xlarge", "Local Linux box", etc.
+  cpu_cores: 2                                  # Number of CPU cores used
+  ram_gb: 16                                    # Available RAM in GB
+  python_version: "3.11.4"                      # python --version
+  os: "windows 11"                              # Or "Ubuntu 22.04 LTS", etc.
+  uses_gpu_for_inference: false                 # Must be false — see compute constraints
+  has_network_during_ranking: false             # Must be false — no API calls during ranking
+  pre_computation_required: false               # true if you pre-compute embeddings or train models offline
+  pre_computation_time_minutes: 0               # Approximate, if applicable
+
+# ============================================================================
+# AI tools declaration
+# ============================================================================
+# Transparency only — declared use is NOT penalized. Be honest. Stage 5 interview
+# may verify these declarations against your code; declarations that contradict
+# your code or your interview are flagged.
+ai_tools_used:
+  - "Claude"  # Used for high-level system architecture and tech stack decisions
+  - "Gemini"  # Used via Antigravity for code implementation and autocomplete
+
+ai_usage_summary: |
+  - Used Claude (Web interface) for high-level system architecture design, scoring rules structure, and tech stack decisions. 
+  - Used Antigravity (powered by Gemini 3.5 Flash) for implementation assistance, code refactoring, and auto-completion. 
+  - No candidate data was shared with external LLMs.
+
+
+# ============================================================================
+# Approach summary (optional but recommended)
+# ============================================================================
+methodology_summary: |
+  A high-performance hybrid candidate ranking system blending a multidimensional
+  structural scoring framework, a behavioral multiplier, an anomaly honeypot filter, and a two-stage semantic matcher. Evaluates profiles across 5 domains (Skills, Career, Experience, Location, and Education). Uses active controls against keyword-stuffing via skill count caps. Integrates a multiplicative behavioral weight (up to 1.2x) reflecting activity recency, response rates, and notice period caps. Filters suspicious profiles with a 6-rule Honeypot anomaly engine (0.01x penalty). Re-ranks top candidates on CPU using TF-IDF and cached SentenceTransformers. Runs end-to-end in < 1 minute for local validation.
+
+
+# ============================================================================
+# Declarations
+# ============================================================================
+declarations:
+  read_submission_spec: true        # I have read submission_spec.md in full
+  code_is_original_work: true       # My code is my team's original work (using AI as a tool is fine)
+  no_collusion: true                # I have not coordinated my submission with other teams
+  honeypot_check_done: true         # OPTIONAL — set true if you explicitly checked for honeypots in your ranking
+  reproduction_tested: true         # I have tested that my reproduce_command runs end-to-end
