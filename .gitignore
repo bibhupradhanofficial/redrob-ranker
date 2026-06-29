@@ -1,0 +1,57 @@
+# Python Compiler Caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+*.venv/
+*.env/
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+.project
+.pydevproject
+.settings/
+
+# OS-Specific Files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+
+# Logs and Runtime Files
+*.log
+pip-log.txt
+pip-delete-this-directory.txt
+.streamlit/
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+
+# Compiled C/Rust Extensions
+*.so
+*.dylib
+*.dll
+*.pyd
+
+# Output and Dataset Constraints (ignoring large datasets but preserving samples)
+*.jsonl
+*.jsonl.gz
+*.csv
+!**/sample_candidates.json
+!**/sample_candidates.jsonl
+!**/sample_candidates.jsonl.gz
