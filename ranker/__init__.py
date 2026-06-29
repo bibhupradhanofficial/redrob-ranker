@@ -14,6 +14,8 @@ from .career_scorer import CareerScorer
 from .experience_scorer import ExperienceScorer
 from .location_scorer import LocationScorer
 from .education_scorer import EducationScorer
+from .behavioral_scorer import BehavioralScorer
+from .honeypot_detector import HoneypotDetector
 
 __all__ = [
     "DataLoader",
@@ -29,5 +31,8 @@ __all__ = [
     "CareerScorer",
     "ExperienceScorer",
     "LocationScorer",
-    "EducationScorer"
+    "EducationScorer",
+    "BehavioralScorer",
+    "HoneypotDetector"
 ]
+
