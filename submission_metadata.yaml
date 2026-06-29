@@ -67,8 +67,7 @@ ai_usage_summary: |
 # Approach summary (optional but recommended)
 # ============================================================================
 methodology_summary: |
-  A high-performance hybrid candidate ranking system blending a multidimensional
-  structural scoring framework, a behavioral multiplier, an anomaly honeypot filter, and a two-stage semantic matcher. Evaluates profiles across 5 domains (Skills, Career, Experience, Location, and Education). Uses active controls against keyword-stuffing via skill count caps. Integrates a multiplicative behavioral weight (up to 1.2x) reflecting activity recency, response rates, and notice period caps. Filters suspicious profiles with a 6-rule Honeypot anomaly engine (0.01x penalty). Re-ranks top candidates on CPU using TF-IDF and cached SentenceTransformers. Runs end-to-end in < 1 minute for local validation.
+  A high-performance hybrid candidate ranking system blending a multidimensional structural scoring framework, a behavioral multiplier, an anomaly honeypot filter, and a two-stage semantic matcher. Evaluates profiles across 5 domains (Skills, Career, Experience, Location, and Education). Uses active controls against keyword-stuffing via skill count caps. Integrates a multiplicative behavioral weight (up to 1.2x) reflecting activity recency, response rates, and notice period caps. Filters suspicious profiles with a 6-rule Honeypot anomaly engine (0.01x penalty). Re-ranks top candidates on CPU using TF-IDF and cached SentenceTransformers. Runs end-to-end in < 1 minute for local validation.
 
 
 # ============================================================================
