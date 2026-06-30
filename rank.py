@@ -12,7 +12,7 @@ Options:
     --candidates PATH     Path to candidates file (.jsonl, .jsonl.gz, or .json for sample)
     --out PATH            Output CSV path (default: submission.csv)
     --no-semantic         Skip sentence-transformer step (faster, lower quality)
-    --semantic-top-n N    Number of candidates for semantic re-ranking (default: 1500)
+    --semantic-top-n N    Number of candidates for semantic re-ranking (default: 1000)
     --sample              Load as JSON array instead of JSONL (for sample_candidates.json)
     --max-candidates N    Limit candidates loaded (for testing; not for final submission)
     --validate            Run validate_submission.py after writing output
@@ -30,7 +30,7 @@ def main():
     parser.add_argument("--candidates", required=True)
     parser.add_argument("--out", default="submission.csv")
     parser.add_argument("--no-semantic", action="store_true")
-    parser.add_argument("--semantic-top-n", type=int, default=500)
+    parser.add_argument("--semantic-top-n", type=int, default=1000)
     parser.add_argument("--sample", action="store_true")
     parser.add_argument("--max-candidates", type=int, default=None)
     parser.add_argument("--validate", action="store_true")

@@ -1,4 +1,4 @@
-# Memory — Complete Candidate Ranking Pipeline & Streamlit Sandbox
+# Memory - Complete Candidate Ranking Pipeline & Streamlit Sandbox
 
 Last updated: 2026-06-29 16:13:00
 
@@ -49,3 +49,4 @@ Last updated: 2026-06-29 16:13:00
 ## Open questions
 
 - None.
+
