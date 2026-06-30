@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Dict, Any, List
 from ranker.jd_config import JD_REQUIRED_SKILLS, JD_NICE_TO_HAVE_SKILLS
 
@@ -16,10 +17,51 @@ class SkillsScorer:
         "expert": 1.0
     }
 
-    def _match_skill(self, skill_name: str, skill_list: List[str]) -> bool:
-        # Case-insensitive substring match
-        skill_lower = skill_name.lower()
-        return any(kw.lower() in skill_lower or skill_lower in kw.lower() for kw in skill_list)
+    def __init__(self):
+        # Pre-normalize JD skills list once at initialization
+        self.req_skills_normalized = []
+        for kw in JD_REQUIRED_SKILLS:
+            kw_norm = re.sub(r'[^a-z0-9]', ' ', kw.lower()).strip()
+            if kw_norm:
+                self.req_skills_normalized.append((kw_norm, kw_norm.split()))
+
+        self.nice_skills_normalized = []
+        for kw in JD_NICE_TO_HAVE_SKILLS:
+            kw_norm = re.sub(r'[^a-z0-9]', ' ', kw.lower()).strip()
+            if kw_norm:
+                self.nice_skills_normalized.append((kw_norm, kw_norm.split()))
+
+    def _match_skill(self, skill_name: str, normalized_skills_list: List[tuple]) -> bool:
+        s_norm = re.sub(r'[^a-z0-9]', ' ', skill_name.lower()).strip()
+        if not s_norm:
+            return False
+            
+        s_words = s_norm.split()
+        s_words_set = set(s_words)
+        s_words_singular = {w[:-1] if w.endswith('s') and len(w) > 2 else w for w in s_words}
+        
+        for kw_norm, kw_words in normalized_skills_list:
+            # Direct exact match
+            if kw_norm == s_norm:
+                return True
+                
+            if len(kw_words) == 1:
+                kw_word = kw_words[0]
+                kw_word_sing = kw_word[:-1] if kw_word.endswith('s') and len(kw_word) > 2 else kw_word
+                if kw_word in s_words_set or kw_word_sing in s_words_singular:
+                    return True
+            else:
+                # Multi-word keyword phrase
+                if kw_norm in s_norm:
+                    return True
+                    
+            if len(s_words) == 1:
+                s_word = s_words[0]
+                s_word_sing = s_word[:-1] if s_word.endswith('s') and len(s_word) > 2 else s_word
+                if s_word in kw_words or s_word_sing in [w[:-1] if w.endswith('s') and len(w) > 2 else w for w in kw_words]:
+                    return True
+                    
+        return False
 
     def score(self, candidate: dict) -> float:
         skills = candidate.get("skills") or []
@@ -55,8 +97,8 @@ class SkillsScorer:
                 continue
 
             # 1. Check match and base contribution
-            is_req = self._match_skill(skill_name, JD_REQUIRED_SKILLS)
-            is_nice = self._match_skill(skill_name, JD_NICE_TO_HAVE_SKILLS)
+            is_req = self._match_skill(skill_name, self.req_skills_normalized)
+            is_nice = self._match_skill(skill_name, self.nice_skills_normalized)
 
             if not is_req and not is_nice:
                 continue

@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import List, Dict, Any
 
 logger = logging.getLogger(__name__)
@@ -13,21 +14,22 @@ class EducationScorer:
             return 0.4  # Default if degree string is empty but entry exists
         
         deg_lower = degree.lower().replace(".", "").strip()
+        tokens = set(re.findall(r'\b\w+\b', deg_lower))
         
         # PhD / Doctorate
-        if any(kw in deg_lower for kw in ["phd", "doctorate", "doctor of philosophy", "doctor"]):
+        if any(kw in tokens for kw in ["phd", "doctorate", "doctor"]) or "doctor of philosophy" in deg_lower:
             return 1.0
             
         # Master's
-        if any(kw in deg_lower for kw in ["mtech", "ms", "me", "msc", "mba", "master"]):
+        if any(kw in tokens for kw in ["mtech", "ms", "me", "msc", "mba"]) or "master" in tokens or any(kw in deg_lower for kw in ["master of", "masters"]):
             return 0.9
             
         # Bachelor's
-        if any(kw in deg_lower for kw in ["btech", "be", "bs", "bsc", "bachelor"]):
+        if any(kw in tokens for kw in ["btech", "be", "bs", "bsc"]) or "bachelor" in tokens or any(kw in deg_lower for kw in ["bachelor of", "bachelors"]):
             return 0.75
             
         # Diploma / Associate
-        if any(kw in deg_lower for kw in ["diploma", "associate"]):
+        if any(kw in tokens for kw in ["diploma", "associate"]):
             return 0.5
             
         # Default fallback for unknown degrees

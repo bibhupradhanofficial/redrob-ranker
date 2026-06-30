@@ -15,6 +15,27 @@ class BehavioralScorer:
     behavioral signals should boost or dampen profile scores, not replace them.
     """
 
+    def _fast_parse_date(self, date_str: str) -> datetime.date:
+        if not date_str:
+            return datetime.date.today()
+        s = str(date_str).strip()
+        if len(s) >= 10 and s[4] == '-' and s[7] == '-':
+            try:
+                return datetime.date(int(s[:4]), int(s[5:7]), int(s[8:10]))
+            except ValueError:
+                pass
+        elif len(s) >= 7 and s[4] == '-':
+            try:
+                return datetime.date(int(s[:4]), int(s[5:7]), 1)
+            except ValueError:
+                pass
+        elif len(s) == 4 and s.isdigit():
+            try:
+                return datetime.date(int(s), 1, 1)
+            except ValueError:
+                pass
+        return parser.parse(s).date()
+
     def score(self, candidate: dict) -> float:
         signals = candidate.get("redrob_signals") or {}
 
@@ -39,7 +60,7 @@ class BehavioralScorer:
                     if isinstance(last_active_date, datetime.datetime):
                         last_active_date = last_active_date.date()
                 else:
-                    last_active_date = parser.parse(str(last_active)).date()
+                    last_active_date = self._fast_parse_date(str(last_active))
                 
                 today = datetime.date.today()
                 days_diff = (today - last_active_date).days

@@ -14,6 +14,27 @@ class ExperienceScorer:
     JD_SOFT_MIN = 4.0
     JD_SOFT_MAX = 10.0
 
+    def _fast_parse_date(self, date_str: str) -> datetime:
+        if not date_str:
+            return datetime.now()
+        s = str(date_str).strip()
+        if len(s) >= 10 and s[4] == '-' and s[7] == '-':
+            try:
+                return datetime(int(s[:4]), int(s[5:7]), int(s[8:10]))
+            except ValueError:
+                pass
+        elif len(s) >= 7 and s[4] == '-':
+            try:
+                return datetime(int(s[:4]), int(s[5:7]), 1)
+            except ValueError:
+                pass
+        elif len(s) == 4 and s.isdigit():
+            try:
+                return datetime(int(s), 1, 1)
+            except ValueError:
+                pass
+        return parser.parse(s)
+
     def _compute_yoe_from_history(self, candidate: dict) -> float:
         history = candidate.get("career_history") or []
         if not isinstance(history, list) or not history:
@@ -30,9 +51,9 @@ class ExperienceScorer:
                 continue
                 
             try:
-                start_date = parser.parse(str(start_str))
+                start_date = self._fast_parse_date(str(start_str))
                 if end_str:
-                    end_date = parser.parse(str(end_str))
+                    end_date = self._fast_parse_date(str(end_str))
                 else:
                     end_date = datetime.now()
                 
@@ -84,6 +105,6 @@ class ExperienceScorer:
 
         # Exception: if years > 15, score caps at 0.55 (likely over-experienced / expensive)
         if yoe > 15.0:
-            score = 0.55
+            score = min(score, 0.55)
 
         return round(score, 4)

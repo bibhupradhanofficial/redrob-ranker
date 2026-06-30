@@ -80,8 +80,8 @@ class CompositeScorer:
             lo = self.location.score(c)
             ed = self.education.score(c)
             bm = self.behavioral.score(c)
-            hp_mult = self.honeypot.honeypot_multiplier(c)
             is_hp = self.honeypot.is_honeypot(c)
+            hp_mult = 0.01 if is_hp else 1.0
             tf = tfidf_scores.get(cid, 0.0)
 
             structural = (0.30 * sk + 0.35 * ca + 0.15 * ex

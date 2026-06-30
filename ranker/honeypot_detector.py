@@ -18,6 +18,27 @@ class HoneypotDetector:
 
     CURRENT_YEAR = 2026
 
+    def _fast_parse_date(self, date_str: str) -> datetime.datetime:
+        if not date_str:
+            return datetime.datetime.now()
+        s = str(date_str).strip()
+        if len(s) >= 10 and s[4] == '-' and s[7] == '-':
+            try:
+                return datetime.datetime(int(s[:4]), int(s[5:7]), int(s[8:10]))
+            except ValueError:
+                pass
+        elif len(s) >= 7 and s[4] == '-':
+            try:
+                return datetime.datetime(int(s[:4]), int(s[5:7]), 1)
+            except ValueError:
+                pass
+        elif len(s) == 4 and s.isdigit():
+            try:
+                return datetime.datetime(int(s), 1, 1)
+            except ValueError:
+                pass
+        return parser.parse(s)
+
     def _compute_yoe_from_history(self, candidate: dict) -> float:
         history = candidate.get("career_history") or []
         if not isinstance(history, list) or not history:
@@ -34,9 +55,9 @@ class HoneypotDetector:
                 continue
                 
             try:
-                start_date = parser.parse(str(start_str))
+                start_date = self._fast_parse_date(str(start_str))
                 if end_str:
-                    end_date = parser.parse(str(end_str))
+                    end_date = self._fast_parse_date(str(end_str))
                 else:
                     end_date = datetime.datetime.now()
                 
@@ -67,31 +88,74 @@ class HoneypotDetector:
 
         history = candidate.get("career_history") or []
 
-        # 1. EXPERIENCE TIMELINE INCONSISTENCY
+        # 1. EXPERIENCE TIMELINE INCONSISTENCY & EDUCATION CHRONOLOGY
         education = candidate.get("education") or []
         end_years = []
+        start_years = []
+        bach_end = None
+        mast_end = None
+        phd_end = None
+
         for edu in education:
             if isinstance(edu, dict):
                 ey = edu.get("end_year") or edu.get("endYear")
+                sy = edu.get("start_year") or edu.get("startYear")
+                deg = str(edu.get("degree") or "").lower().replace(".", "").strip()
+                
                 if ey is not None:
                     try:
-                        end_years.append(int(float(ey)))
+                        ey_val = int(float(ey))
+                        end_years.append(ey_val)
+                        
+                        # Match degrees to check academic chronology contradictions
+                        if any(kw in deg for kw in ["btech", "be", "bs", "bsc", "bachelor"]):
+                            bach_end = ey_val if bach_end is None else min(bach_end, ey_val)
+                        elif any(kw in deg for kw in ["mtech", "ms", "me", "msc", "mba", "master"]):
+                            mast_end = ey_val if mast_end is None else min(mast_end, ey_val)
+                        elif any(kw in deg for kw in ["phd", "doctorate", "doctor"]):
+                            phd_end = ey_val if phd_end is None else min(phd_end, ey_val)
+                    except (ValueError, TypeError):
+                        pass
+                if sy is not None:
+                    try:
+                        start_years.append(int(float(sy)))
                     except (ValueError, TypeError):
                         pass
         
-        if end_years:
-            grad_year = max(end_years)
+        # Check education chronology contradictions
+        edu_contradiction = False
+        if bach_end and mast_end and mast_end < bach_end:
+            edu_contradiction = True
+        if bach_end and phd_end and phd_end < bach_end:
+            edu_contradiction = True
+        if mast_end and phd_end and phd_end < mast_end:
+            edu_contradiction = True
+
+        if edu_contradiction:
+            flags.append("EDUCATION_CHRONOLOGY_CONTRADICTION")
+
+        # Compute threshold limit year for career start
+        if start_years:
+            limit_year = min(start_years)
+        elif end_years:
+            limit_year = min(end_years) - 4
         else:
-            grad_year = self.CURRENT_YEAR - yoe_val
+            limit_year = self.CURRENT_YEAR - yoe_val - 4
 
         timeline_inconsistent = False
         for entry in history:
             if isinstance(entry, dict):
+                title = str(entry.get("title") or entry.get("job_title") or "").lower()
+                # Skip timeline checks for internships / student work / co-op / fellowships
+                is_intern = any(kw in title for kw in ["intern", "co-op", "trainee", "student", "fellow"])
+                if is_intern:
+                    continue
+
                 start_str = entry.get("start_date") or entry.get("startDate")
                 if start_str:
                     try:
-                        start_year = parser.parse(str(start_str)).year
-                        if start_year < (grad_year - 1):
+                        start_year = self._fast_parse_date(str(start_str)).year
+                        if start_year < limit_year:
                             timeline_inconsistent = True
                             break
                     except Exception:
@@ -107,7 +171,7 @@ class HoneypotDetector:
                 dur = entry.get("duration_months")
                 if start_str and dur is not None:
                     try:
-                        start_year = parser.parse(str(start_str)).year
+                        start_year = self._fast_parse_date(str(start_str)).year
                         dur_val = float(dur)
                         max_allowed_months = 12 * (self.CURRENT_YEAR - start_year + 1)
                         if dur_val > max_allowed_months:

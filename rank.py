@@ -30,7 +30,7 @@ def main():
     parser.add_argument("--candidates", required=True)
     parser.add_argument("--out", default="submission.csv")
     parser.add_argument("--no-semantic", action="store_true")
-    parser.add_argument("--semantic-top-n", type=int, default=1500)
+    parser.add_argument("--semantic-top-n", type=int, default=300)
     parser.add_argument("--sample", action="store_true")
     parser.add_argument("--max-candidates", type=int, default=None)
     parser.add_argument("--validate", action="store_true")

@@ -48,6 +48,27 @@ class CareerScorer:
         co_lower = company_name.lower()
         return any(c.lower() in co_lower for c in consulting_list)
 
+    def _fast_parse_date(self, date_str: str) -> datetime:
+        if not date_str:
+            return datetime.now()
+        s = str(date_str).strip()
+        if len(s) >= 10 and s[4] == '-' and s[7] == '-':
+            try:
+                return datetime(int(s[:4]), int(s[5:7]), int(s[8:10]))
+            except ValueError:
+                pass
+        elif len(s) >= 7 and s[4] == '-':
+            try:
+                return datetime(int(s[:4]), int(s[5:7]), 1)
+            except ValueError:
+                pass
+        elif len(s) == 4 and s.isdigit():
+            try:
+                return datetime(int(s), 1, 1)
+            except ValueError:
+                pass
+        return parser.parse(s)
+
     def _get_entry_months(self, entry: dict) -> float:
         if "duration_months" in entry and entry["duration_months"] is not None:
             try:
@@ -60,9 +81,9 @@ class CareerScorer:
         if not start_str:
             return 0.0
         try:
-            start_date = parser.parse(str(start_str))
+            start_date = self._fast_parse_date(str(start_str))
             if end_str:
-                end_date = parser.parse(str(end_str))
+                end_date = self._fast_parse_date(str(end_str))
             else:
                 end_date = datetime.now()
             return max(0.0, (end_date - start_date).days / 30.4375)
@@ -110,6 +131,14 @@ class CareerScorer:
         if self._match_title(current_title, disqualifiers):
             title_score *= 0.15
 
+        # Pure research / academic check
+        research_kws = JD_DISQUALIFYING_SIGNALS.get("pure_research_keywords") or []
+        if self._match_title(current_title, research_kws):
+            # Only downweight if they don't have a strong applied title like ML Engineer or AI Engineer or Backend Engineer
+            applied_titles = ["ai engineer", "ml engineer", "software engineer", "backend engineer", "applied scientist"]
+            if not any(at in current_title.lower() for at in applied_titles):
+                title_score *= 0.60
+
         # 2. COMPANY TYPE SCORE
         consulting_list = JD_DISQUALIFYING_SIGNALS.get("consulting_companies") or []
         consulting_months = 0.0
@@ -150,7 +179,7 @@ class CareerScorer:
                 comp_val = entry.get("company") or entry.get("company_name") or ""
                 if start_str:
                     try:
-                        start_date = parser.parse(str(start_str))
+                        start_date = self._fast_parse_date(str(start_str))
                         valid_entries.append((start_date, title_val, comp_val, entry))
                     except Exception:
                         pass

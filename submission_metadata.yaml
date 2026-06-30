@@ -13,7 +13,7 @@ primary_contact:
 team_members:
   - name: "Bibhasindhu Pradhan"
     email: "bibhasindhupradhan@gmail.com"
-    role: "ML Developer"         # Optional, e.g. "Team Lead", "Backend", "Data"
+    role: "Python Programmer"         # Optional, e.g. "Team Lead", "Backend", "Data"
 
   # Add more members as needed; solo participants list just one member
 
@@ -54,12 +54,12 @@ compute:
 # may verify these declarations against your code; declarations that contradict
 # your code or your interview are flagged.
 ai_tools_used:
-  - "Claude"  # Used for high-level system architecture and tech stack decisions
-  - "Gemini"  # Used via Antigravity for code implementation and autocomplete
+  - "Claude" 
+  - "Gemini"  
 
 ai_usage_summary: 
-  - Used Claude (Web interface) for high-level system architecture design, scoring rules structure, and tech stack decisions. 
-  - Used Antigravity (powered by Gemini 3.5 Flash) for implementation assistance, code refactoring, and auto-completion. 
+  - Used Claude Sonnet 4.6 through Website for high-level system architecture design, scoring rules structure, and tech stack decisions. 
+  - Used Gemini 3.5 Flash through Antigravity for implementation assistance, code refactoring and auto-completion. 
   - No candidate data was shared with external LLMs.
 
 
